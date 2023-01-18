@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { HelloWorld } from './scenes/helloWorld';
+import { Main } from './scenes/main';
 
 const load = (app: PIXI.Application) => {
     return new Promise<void>((resolve) => {
@@ -17,6 +17,7 @@ const main = async () => {
     document.body.style.margin = '0';
     app.renderer.view.style.position = 'absolute';
     app.renderer.view.style.display = 'block';
+    app.renderer.backgroundColor = 0x308834;
 
     // View size = windows
     app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -29,7 +30,7 @@ const main = async () => {
     document.body.appendChild(app.view);
 
     // Set scene
-    var scene = new HelloWorld(app);
+    var scene = new Main(app);
     app.stage.addChild(scene);
 };
 
