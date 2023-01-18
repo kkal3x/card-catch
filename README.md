@@ -1,1 +1,1 @@
-# card-catch
+Original boilerplate: https://github.com/GuillaumeDesforges/pixijs-typescript-starter
