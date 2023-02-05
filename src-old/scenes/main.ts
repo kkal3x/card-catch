@@ -84,7 +84,7 @@ export class Main extends PIXI.Container {
     gradient(from: string, to: string): PIXI.Texture {
 
         const c = document.createElement("canvas");
-        c.width = 1000;
+        c.width = 2000;
         c.height = 1000;
         const ctx = c.getContext("2d");
 
@@ -94,7 +94,7 @@ export class Main extends PIXI.Container {
             grd.addColorStop(0, from);
             grd.addColorStop(1, to);
             ctx.fillStyle = grd;
-            ctx.fillRect(0,0,1000,1000);
+            ctx.fillRect(0,0,2000,1000);
 
         }
 
@@ -110,10 +110,10 @@ export class Main extends PIXI.Container {
 
         this.addChild(rect);
 
-        const testCard = new PIXI.Sprite(PIXI.Texture.from('https://deckofcardsapi.com/static/img/aceDiamonds.png'))
-        this.addChild(testCard);
+        // const testCard = new PIXI.Sprite(PIXI.Texture.from('https://deckofcardsapi.com/static/img/aceDiamonds.png'))
+        // this.addChild(testCard);
 
-        gsap.to(testCard.position, {y: 500, duration: 5, delay: 1, ease: "power3.inOut"})
+        // gsap.to(testCard.position, {y: 500, duration: 5, delay: 1, ease: "power3.inOut"})
 
 
     }
