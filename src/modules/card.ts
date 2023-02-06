@@ -21,7 +21,6 @@ class Card{
             this.image.onload = () => {
                 const baseTexture = new PIXI.BaseTexture(this.image);
                 this.sprite.texture = new PIXI.Texture(baseTexture);
-                this.sprite.interactive = true;
                 this.sprite.hitArea = new PIXI.Circle(0, 0, this.sprite.texture.height / 2 * 1.25);
 
                 // const circle = new PIXI.Graphics();
@@ -30,6 +29,7 @@ class Card{
                 // circle.alpha = 0.5;
                 //
                 // this.sprite.addChild(circle)
+
                 resolve(this.image);
             };
             this.image.onerror = reject;

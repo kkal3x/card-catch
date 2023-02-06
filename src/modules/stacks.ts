@@ -1,8 +1,8 @@
 import gsap from "gsap";
-import Card from './Card';
+import Card from './card';
 import Game from '../game';
 
-class CardStack {
+class Stacks {
     private stacks: Card[][];
     private maxStackAngle: number = 150 / 180 * Math.PI;
     private maxCardAngle: number = 30 / 180 * Math.PI;
@@ -115,4 +115,4 @@ class CardStack {
 
 }
 
-export default CardStack;
+export default Stacks;

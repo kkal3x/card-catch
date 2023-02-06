@@ -1,8 +1,8 @@
 import gsap from "gsap";
 import * as PIXI from 'pixi.js';
 import Card from './modules/card';
-import CardDeck from "./modules/cardDeck";
-import CardStacks from "./modules/CardStacks";
+import Deck from "./modules/deck";
+import Stacks from "./modules/stacks";
 
 class Game {
 
@@ -17,9 +17,9 @@ class Game {
     private readonly gameOverContainer: PIXI.Container = new PIXI.Container();
     private throwTime: number = 3000;
 
-    public cardDeck: CardDeck = new CardDeck();
+    public deck: Deck = new Deck();
     public thrownCards: Card[] = [];
-    public cardStacks: CardStacks = new CardStacks(this);
+    public stacks: Stacks = new Stacks(this);
 
     public cardsHeight: number = 0;
     public scoreCaught: number = 0;
@@ -56,7 +56,7 @@ class Game {
 
         this.showLoader();
 
-        this.cardDeck.cacheFirstCards(5).then(() => {
+        this.deck.cacheFirstCards(5).then(() => {
 
             this.hideLoader();
             this.showScoreContainer();
@@ -92,7 +92,7 @@ class Game {
 
         this.updateCardsScale();
 
-        this.cardStacks.resize();
+        this.stacks.resize();
 
     }
 
@@ -133,10 +133,10 @@ class Game {
 
     public loopCardsThrow(): void {
 
-        if (this.cardDeck.nextCardIndex >= 52) this.showGameOver();
+        if (this.deck.nextCardIndex >= 52) this.showGameOver();
         else {
 
-            let card = this.cardDeck.getNextCard();
+            let card = this.deck.getNextCard();
 
             this.addCard(card.sprite);
 
@@ -170,6 +170,7 @@ class Game {
             this.height * Math.random() - this.height / 2
         ];
 
+        card.sprite.interactive = true;
         card.sprite.on('pointerdown', (event: any) => { this.clicked(event, card) });
 
         card.sprite.scale.set(scale);
@@ -223,7 +224,7 @@ class Game {
 
         animRotation.then(() => {
 
-            this.cardStacks.addCard(card);
+            this.stacks.addCard(card);
 
             this.loopCardsThrow();
 
@@ -290,7 +291,7 @@ class Game {
 
     private updateCardsScale(): void {
 
-        this.cardDeck.cards.forEach(card => {
+        this.deck.cards.forEach(card => {
 
             const scale = this.cardsHeight / card.sprite.texture.height;
             gsap.to(card.sprite.scale, {x: scale, y: scale, duration: 0.25, delay: 0, ease: "power1.Out"});

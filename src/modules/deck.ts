@@ -1,9 +1,8 @@
 import Card from './card';
 
-class CardDeck {
+class Deck {
     public cards: Card[];
     public nextCardIndex = 0;
-    // private maxCachedCards = 5;
     private deckId: string = '';
 
     constructor() {
@@ -19,8 +18,6 @@ class CardDeck {
     public getNextCard(): Card {
 
         this.cacheCards(1);
-
-        // console.log('card id', this.nextCardIndex)
 
         return this.cards[this.nextCardIndex++];
 
@@ -43,11 +40,11 @@ class CardDeck {
 
     public async cacheFirstCards(amount: number): Promise<void> {
 
-        this.deckId = await CardDeck.fetchDeckId();
+        this.deckId = await Deck.fetchDeckId();
         await this.cacheCards(amount);
 
     }
 
 }
 
-export default CardDeck;
+export default Deck;
