@@ -2,6 +2,7 @@ import gsap from "gsap";
 import * as PIXI from 'pixi.js';
 import Card from './modules/card';
 import CardDeck from "./modules/cardDeck";
+import CardStacks from "./modules/CardStacks";
 
 class Game {
 
@@ -11,27 +12,40 @@ class Game {
     public height: number = window.innerHeight;
     private readonly backgroundContainer: PIXI.Container = new PIXI.Container();
     private readonly mainContainer: PIXI.Container = new PIXI.Container();
+    private readonly scoreContainer: PIXI.Container = new PIXI.Container();
     private readonly loaderContainer: PIXI.Container = new PIXI.Container();
     private readonly gameOverContainer: PIXI.Container = new PIXI.Container();
     private throwTime: number = 3000;
 
     public cardDeck: CardDeck = new CardDeck();
     public thrownCards: Card[] = [];
+    public cardStacks: CardStacks = new CardStacks(this);
+
+    public cardsHeight: number = 0;
+    public scoreCaught: number = 0;
+    public scoreMissed: number = 0;
+
+    private scoreTexts: PIXI.Text[] = [];
 
     constructor() {
 
         this.app = new PIXI.Application({
             resizeTo: window,
-            backgroundColor: 0x308834
+            resolution: window.devicePixelRatio,
+            backgroundColor: 0x308834,
         });
 
         this.app.stage.addChild(this.backgroundContainer);
         this.app.stage.addChild(this.mainContainer);
+        this.app.stage.addChild(this.scoreContainer);
         this.app.stage.addChild(this.loaderContainer);
         this.app.stage.addChild(this.gameOverContainer);
+        this.scoreContainer.alpha = 0;
 
         this.backgroundGradient = Game.createBackgroundGradient();
         this.backgroundContainer.addChild(this.backgroundGradient);
+
+        this.addScoreText();
 
         this.resize();
         window.addEventListener('resize', this.resize.bind(this));
@@ -45,7 +59,7 @@ class Game {
         this.cardDeck.cacheFirstCards(5).then(() => {
 
             this.hideLoader();
-
+            this.showScoreContainer();
             this.startGame();
 
         });
@@ -70,8 +84,15 @@ class Game {
         this.height = window.innerHeight;
 
         this.mainContainer.position.set(this.width / 2, this.height / 2);
+        this.scoreContainer.position.set(this.width / 2, 0);
         this.loaderContainer.position.set(this.width / 2, this.height / 2);
         this.gameOverContainer.position.set(this.width / 2, this.height / 2);
+
+        this.cardsHeight = this.height / 4;
+
+        this.updateCardsScale();
+
+        this.cardStacks.resize();
 
     }
 
@@ -104,10 +125,6 @@ class Game {
 
     }
 
-    // private update() {
-    //
-    // }
-
     private startGame(): void {
 
         this.loopCardsThrow();
@@ -123,10 +140,10 @@ class Game {
 
             this.addCard(card.sprite);
 
-            this.throwCard(card, () => {
+            this.throwCard(card, false, () => {
 
-                this.removeCard(card.sprite)
-
+                this.addScoreMissed();
+                this.removeCard(card.sprite);
                 this.loopCardsThrow();
 
             });
@@ -135,13 +152,11 @@ class Game {
 
     }
 
-    public async throwCard(card: any, next: any): Promise<void> {
+    public async throwCard(card: any, simulate: boolean, next: any): Promise<void> {
 
         this.thrownCards.push(card);
 
-        const scaleToHeight = 1 / 4;
-
-        const scale = this.height / card.sprite.texture.height * scaleToHeight;
+        const scale = this.cardsHeight / card.sprite.texture.height;
 
         const cardDiagonalLength = Math.pow((Math.pow(card.sprite.texture.height, 2) + Math.pow(card.sprite.texture.width, 2)), 0.5) * scale;
 
@@ -155,7 +170,6 @@ class Game {
             this.height * Math.random() - this.height / 2
         ];
 
-        card.sprite.interactive = true;
         card.sprite.on('pointerdown', (event: any) => { this.clicked(event, card) });
 
         card.sprite.scale.set(scale);
@@ -164,15 +178,30 @@ class Game {
         card.animations = [];
 
         const animRotation = gsap.to(card.sprite, {rotation: Math.PI * (Math.random() - 0.5) * (Math.random() * 8 + 2), duration: this.throwTime / 1000, delay: 0, ease: "power1.inOut"})
-        const animPosition = gsap.to(card.sprite.position, {x: endPosition[0], y: endPosition[1], duration: this.throwTime / 1000, delay: 0, ease: "power1.inOut"});
 
-        card.animations.push(animRotation, animPosition);
+        if (simulate) {
 
-        animPosition.then(next)
+            const animPosition = gsap.to(card.sprite.position, {x: 0, y: endPosition[1], duration: this.throwTime / 1000 / 2, delay: 0, ease: "power1.in"});
+
+            card.animations.push(animRotation, animPosition);
+
+            animPosition.then(() => this.clicked(null, card))
+
+        } else {
+
+            const animPosition = gsap.to(card.sprite.position, {x: endPosition[0], y: endPosition[1], duration: this.throwTime / 1000, delay: 0, ease: "power1.inOut"});
+
+            card.animations.push(animRotation, animPosition);
+
+            animPosition.then(next)
+
+        }
 
     }
 
     private clicked(event: any, card: Card) {
+
+        this.addScoreCaught();
 
         this.throwTime -= 50;
 
@@ -184,22 +213,17 @@ class Game {
 
         this.addToStack(card);
 
-        // console.log('click', event.target)
-
     }
 
     private addToStack(card: Card) {
 
-        const scale = this.height / 4 / card.sprite.texture.height;
-        const cardHeight = card.sprite.texture.height * scale;
-        const time = 0.75;
-
         const endRotation = card.sprite.rotation - (card.sprite.rotation % (Math.PI));
 
-        const animRotation = gsap.to(card.sprite, {rotation: endRotation, duration: time, delay: 0, ease: "power1.Out"})
-        const animPosition = gsap.to(card.sprite.position, {x: 0, y: this.height / 2 - cardHeight / 2 - this.height / 100, duration: time, delay: 0, ease: "power1.Out"});
+        const animRotation = gsap.to(card.sprite, {rotation: endRotation, duration: 0.2, delay: 0, ease: "power1.Out"})
 
-        animPosition.then(() => {
+        animRotation.then(() => {
+
+            this.cardStacks.addCard(card);
 
             this.loopCardsThrow();
 
@@ -231,7 +255,7 @@ class Game {
 
         const gameOverOverlay = new PIXI.Graphics();
         gameOverOverlay.beginFill(0x000000);
-        gameOverOverlay.drawRect(-2000 / 2, -2000 / 2, 2000, 2000);
+        gameOverOverlay.drawRect(-3000 / 2, -3000 / 2, 3000, 3000);
         gameOverOverlay.alpha = 0;
 
         this.gameOverContainer.addChild(gameOverOverlay);
@@ -261,6 +285,76 @@ class Game {
             this.loaderContainer.removeChild(child);
             this.loaderContainer.visible = false
         });
+
+    }
+
+    private updateCardsScale(): void {
+
+        this.cardDeck.cards.forEach(card => {
+
+            const scale = this.cardsHeight / card.sprite.texture.height;
+            gsap.to(card.sprite.scale, {x: scale, y: scale, duration: 0.25, delay: 0, ease: "power1.Out"});
+
+        });
+
+    }
+
+    private addScoreText(): void {
+
+        const scoreCaught = new PIXI.Text('Caught: ' + this.scoreCaught, {
+            fontSize: 24,
+            fill: 0xffffff
+        });
+        scoreCaught.name = 'scoreCaught';
+        scoreCaught.anchor.set(0, 0.5);
+        scoreCaught.position.set(-50, 20);
+
+        const scoreMissed = new PIXI.Text('Missed: ' + this.scoreMissed, {
+            fontSize: 24,
+            fill: 0xffffff
+        });
+        scoreMissed.name = 'scoreMissed';
+        scoreMissed.anchor.set(0, 0.5);
+        scoreMissed.position.set(-50, 50);
+
+        this.scoreTexts.push(scoreCaught, scoreMissed);
+
+        this.scoreContainer.addChild(scoreCaught);
+        this.scoreContainer.addChild(scoreMissed);
+
+    }
+
+    private addScoreCaught(): void {
+
+        this.scoreCaught++;
+
+        this.scoreTexts.forEach(score => {
+            if (score.name === 'scoreCaught') {
+
+                score.text = 'Caught: ' + this.scoreCaught;
+
+            }
+        });
+
+    }
+
+    private addScoreMissed(): void {
+
+        this.scoreMissed++;
+
+        this.scoreTexts.forEach(score => {
+            if (score.name === 'scoreMissed') {
+
+                score.text = 'Missed: ' + this.scoreMissed;
+
+            }
+        });
+
+    }
+
+    private showScoreContainer(): void {
+
+        gsap.to(this.scoreContainer, {alpha: 1, duration: 0.35, delay: 0, ease: "power1.Out"});
 
     }
 

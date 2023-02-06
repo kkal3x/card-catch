@@ -1,7 +1,7 @@
 import Card from './card';
 
 class CardDeck {
-    private cards: Card[];
+    public cards: Card[];
     public nextCardIndex = 0;
     // private maxCachedCards = 5;
     private deckId: string = '';
@@ -20,7 +20,7 @@ class CardDeck {
 
         this.cacheCards(1);
 
-        console.log('card id', this.nextCardIndex)
+        // console.log('card id', this.nextCardIndex)
 
         return this.cards[this.nextCardIndex++];
 
