@@ -1,12 +1,8 @@
-import GameModel from './game/model';
-import GameView from './game/view';
-import GameController from './game/controller';
+import Game from './game';
 
-const model = new GameModel();
-const view = new GameView();
-const controller = new GameController(model, view);
+const game = new Game();
 
-const app = view.getApp();
+const app = game.app;
 
 document.body.appendChild(app.view);
 document.body.style.margin = '0';
